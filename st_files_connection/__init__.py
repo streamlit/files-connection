@@ -12,6 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from st_files_connection.connection import FilesConnection as _FilesConnection
-
-FilesConnection = _FilesConnection
+from st_files_connection.connection import FilesConnection as FilesConnection
