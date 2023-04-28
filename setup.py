@@ -19,9 +19,7 @@ VERSION = "0.1.0"  # PEP-440
 NAME = "st_files_connection"
 
 INSTALL_REQUIRES = [
-    # Update streamlit version after 1.22 release
-    # "streamlit>=1.22",
-    "streamlit",
+    "streamlit>=1.22",
     "fsspec"
 ]
 
