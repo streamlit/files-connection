@@ -47,6 +47,8 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
 
         secrets = self._secrets.to_dict()
         protocol = secrets.pop("protocol", self.protocol)
+        if 'protocol' in kwargs:
+            protocol = kwargs.pop('protocol')
 
         if protocol is None:
             protocol = "file"
@@ -148,24 +150,28 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         raise ValueError(f"{input_format} is not a valid value for `input_format=`.")
 
     def _repr_html_(self) -> str:
+        """Return a human-friendly markdown string describing this connection.
+        This is the string that will be written to the app if a user calls
+        ``st.write(this_connection)``. Subclasses of ExperimentalBaseConnection can freely
+        overwrite this method if desired.
+        Returns
+        -------
+        str
+        """
         module_name = getattr(self, "__module__", None)
         class_name = type(self).__name__
-        if self._connection_name:
-            name = f"`{self._connection_name}` "
-            if len(self._secrets) > 0:
-                cfg = f"""- Configured from `[connections.{self._connection_name}]`
-                """
-            else:
-                cfg = ""
-        else:
-            name = ""
-            cfg = ""
-        md = f"""
-        ---
-        **st.connection {name}built from `{module_name}.{class_name}`**
-        {cfg}
-        - Protocol: `{self.protocol}`
-        - Learn more using `st.help()`
-        ---
-        """
-        return md
+
+        cfg = (
+            f"- Configured from `[connections.{self._connection_name}]`"
+            if len(self._secrets)
+            else ""
+        )
+
+        return f"""
+---
+**st.connection {self._connection_name} built from `{module_name}.{class_name}`**
+{cfg}
+- Protocol: `{self.protocol}`
+- Learn more using `st.help()`
+---
+"""
