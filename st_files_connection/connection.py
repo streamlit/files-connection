@@ -134,7 +134,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         Read the file at the specified path, cache the result and return as a pandas DataFrame.
 
         input_format must be specified - valid values are `text`, `csv`, `parquet`. Result is
-        cached indefinitely by default, set `ttl = None` to disable caching.
+        cached indefinitely by default, set `ttl = 0` to disable caching.
         """
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
         def _read_text(path: str | Path, **kwargs) -> str:

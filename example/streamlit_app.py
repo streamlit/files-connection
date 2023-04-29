@@ -96,7 +96,7 @@ with gcs:
     Write some test files to a GCS bucket and read them back. To run this code you need to:
     - Ensure gcsfs is installed (should be already if you did `pip install -r requirements.txt`)
     - Set up credentials to an GCS bucket using `.streamlit/secrets.toml`
-      - **Note:** You can either put the full token info in secrets as below, or just set `token = "path/to/my/token.json"`
+      - Alternatively, you can pass a `token=` argument to the connection constructor with a path to your google token file
     - Set your correct bucket in the text input below and hit the checkbox!
 
     #### Streamlit secrets example
