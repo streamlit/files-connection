@@ -31,6 +31,11 @@ if TYPE_CHECKING:
 
 
 class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
+    """Connects a streamlit app to arbitrary file storage
+
+    FilesConnection uses fsspec to set up connections to cloud, remote, local and
+    other file stores such as S3, GCS, HDFS, sftp, and many more.
+    """
 
     def __init__(
         self, connection_name: str = "default", protocol: str | None = None, **kwargs
@@ -42,7 +47,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         """
         Pass a protocol such as "s3", "gcs", or "file"
         """
-        from fsspec import AbstractFileSystem, filesystem
+        from fsspec import AbstractFileSystem, filesystem, available_protocols
         from fsspec.spec import AbstractBufferedFile
 
         secrets = self._secrets.to_dict()
@@ -51,7 +56,12 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
             protocol = kwargs.pop('protocol')
 
         if protocol is None:
-            protocol = "file"
+            # Check if name maps to a protocol known by fsspec
+            # (allows developers to use name == protocol for shorthand)
+            if self._connection_name in available_protocols():
+                protocol = self._connection_name
+            else:
+                protocol = "file"
 
         if protocol == "gcs" and secrets:
             secrets = {"token": secrets}
@@ -67,11 +77,13 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     
     @property
     def fs(self) -> "AbstractFileSystem":
+        """Access the underlying AbstractFileSystem for full API operations."""
         return self._instance
 
     def open(
         self, path: str | Path, mode: str = "rb", *args, **kwargs
     ) -> Iterator[TextIOWrapper | AbstractBufferedFile]:
+        """Open the specified path as a file-like object."""
         # Connection name is only passed to make sure that the cache is
         # connection-specific
         if "connection_name" in kwargs:
@@ -116,6 +128,11 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
     ):
+        """Read the file at the specified path, cache the result and return as a pandas DataFrame.
+
+        input_format must be specified - valid values are `text`, `csv`, `parquet`. Result is
+        cached indefinitely by default, set `ttl = 0` to disable caching.
+        """
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
         def _read_text(path: str | Path, **kwargs) -> str:
             if "connection_name" in kwargs:
