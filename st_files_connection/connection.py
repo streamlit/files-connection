@@ -83,9 +83,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     def open(
         self, path: str | Path, mode: str = "rb", *args, **kwargs
     ) -> Iterator[TextIOWrapper | AbstractBufferedFile]:
-        """
-        Open the specified path as a file-like object
-        """
+        """Open the specified path as a file-like object."""
         # Connection name is only passed to make sure that the cache is
         # connection-specific
         if "connection_name" in kwargs:
@@ -130,8 +128,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
     ):
-        """
-        Read the file at the specified path, cache the result and return as a pandas DataFrame.
+        """Read the file at the specified path, cache the result and return as a pandas DataFrame.
 
         input_format must be specified - valid values are `text`, `csv`, `parquet`. Result is
         cached indefinitely by default, set `ttl = 0` to disable caching.
