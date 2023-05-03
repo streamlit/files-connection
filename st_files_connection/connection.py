@@ -161,6 +161,8 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
 
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
         def _read_parquet(path: str | Path, **kwargs) -> pd.DataFrame:
+            # TODO: for general read() user may commonly pass `nrows` which isn't supported by read_parquet
+            # Can we add something like this as a workaround? https://stackoverflow.com/a/69888274/20530083
             if "connection_name" in kwargs:
                 kwargs.pop("connection_name")
 
@@ -174,6 +176,11 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
 
             with self.open(path, "rt") as f:
                 return pd.read_json(f, **kwargs)
+
+        # Try to infer input_format from file extension if missing
+        if input_format is None:
+            # You can construct a Path from a Path so this should work regardless
+            input_format = Path(path).suffix.replace('.', '', 1)
 
         if input_format == 'text':
             return _read_text(path, connection_name=self._connection_name, **kwargs)
