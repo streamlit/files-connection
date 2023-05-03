@@ -66,9 +66,11 @@ there. You can pass in anything you would pass to an fsspec file system construc
 
 ### read()
 
-`conn.read("path/to/file", input_format="text|csv|parquet|json", ttl=None) -> pd.DataFrame`
+`conn.read("path/to/file", input_format="text|csv|parquet|json" or None, ttl=None) -> pd.DataFrame`
 
 Specify a path to file and input format. Optionally specify a TTL for caching.
+
+Will attempt to infer `input_format` from path suffix if not specified.
 
 ```python
 conn = st.experimental_connection("s3", type=FilesConnection)
