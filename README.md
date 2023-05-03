@@ -66,7 +66,7 @@ there. You can pass in anything you would pass to an fsspec file system construc
 
 ### read()
 
-`conn.read("path/to/file", input_format="text|csv|parquet", ttl=None) -> pd.DataFrame`
+`conn.read("path/to/file", input_format="text|csv|parquet|json", ttl=None) -> pd.DataFrame`
 
 Specify a path to file and input format. Optionally specify a TTL for caching.
 

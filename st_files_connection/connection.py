@@ -121,6 +121,16 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     ) -> pd.DataFrame:
         pass
 
+    @overload
+    def read(
+        self,
+        path: str | Path,
+        input_format: Literal["json"],
+        ttl: Optional[Union[float, int, timedelta]] = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        pass
+
     def read(
         self,
         path: str | Path,
@@ -130,7 +140,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     ):
         """Read the file at the specified path, cache the result and return as a pandas DataFrame.
 
-        input_format must be specified - valid values are `text`, `csv`, `parquet`. Result is
+        input_format must be specified - valid values are `text`, `csv`, `parquet`, `json`. Result is
         cached indefinitely by default, set `ttl = 0` to disable caching.
         """
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
@@ -156,13 +166,26 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
 
             with self.open(path, "rb") as f:
                 return pd.read_parquet(f, **kwargs)
-        
+
+        @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
+        def _read_json(path: str | Path, **kwargs) -> pd.DataFrame:
+            if "connection_name" in kwargs:
+                kwargs.pop("connection_name")
+
+            with self.open(path, "rt") as f:
+                return pd.read_json(f, **kwargs)
+
         if input_format == 'text':
             return _read_text(path, connection_name=self._connection_name, **kwargs)
         elif input_format == 'csv':
             return _read_csv(path, connection_name=self._connection_name, **kwargs)
         elif input_format == 'parquet':
             return _read_parquet(path, connection_name=self._connection_name, **kwargs)
+        elif input_format == 'json':
+            return _read_json(path, connection_name=self._connection_name, **kwargs)
+        elif input_format == 'jsonl':
+            kwargs['lines'] = True
+            return _read_json(path, connection_name=self._connection_name, **kwargs)
         # TODO: if input_format is None, try to infer it from file extension
         raise ValueError(f"{input_format} is not a valid value for `input_format=`.")
 
