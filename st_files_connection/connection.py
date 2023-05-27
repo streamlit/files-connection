@@ -181,6 +181,8 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         if input_format is None:
             # You can construct a Path from a Path so this should work regardless
             input_format = Path(path).suffix.replace('.', '', 1)
+            if input_format == 'txt':
+                input_format = 'text'
 
         if input_format == 'text':
             return _read_text(path, connection_name=self._connection_name, **kwargs)
