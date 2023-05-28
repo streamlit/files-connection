@@ -106,26 +106,6 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     def read(
         self,
         path: str | Path,
-        input_format: Literal["csv"],
-        ttl: Optional[Union[float, int, timedelta]] = None,
-        **kwargs,
-    ) -> pd.DataFrame:
-        pass
-
-    @overload
-    def read(
-        self,
-        path: str | Path,
-        input_format: Literal["parquet"],
-        ttl: Optional[Union[float, int, timedelta]] = None,
-        **kwargs,
-    ) -> pd.DataFrame:
-        pass
-
-    @overload
-    def read(
-        self,
-        path: str | Path,
         input_format: Literal["json"],
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
@@ -136,7 +116,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     def read(
         self,
         path: str | Path,
-        input_format: Literal["jsonl"],
+        input_format: Union[Literal["csv"], Literal["parquet"], Literal["jsonl"]],
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
     ) -> pd.DataFrame:
