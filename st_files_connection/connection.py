@@ -116,7 +116,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     def read(
         self,
         path: str | Path,
-        input_format: Union[Literal["csv"], Literal["parquet"], Literal["jsonl"]],
+        input_format: Literal["csv", "parquet", "jsonl"],
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
     ) -> pd.DataFrame:
@@ -131,8 +131,9 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     ):
         """Read the file at the specified path, cache the result and return as a pandas DataFrame.
 
-        input_format must be specified - valid values are `text`, `csv`, `parquet`, `json`. Result is
-        cached indefinitely by default, set `ttl = 0` to disable caching.
+        input_format may be specified - valid values are `text`, `csv`, `parquet`, `json`, `jsonl`.
+        If not specified, input_format will be inferred optimistically from path file extension.
+        Result is cached indefinitely by default, set `ttl = 0` to disable caching.
         """
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
         def _read_text(path: str | Path, **kwargs) -> str:
@@ -194,7 +195,6 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
             return _read_json(path, connection_name=self._connection_name, **kwargs)
         elif input_format == 'jsonl':
             return _read_jsonl(path, connection_name=self._connection_name, **kwargs)
-        # TODO: if input_format is None, try to infer it from file extension
         raise ValueError(f"{input_format} is not a valid value for `input_format=`.")
 
     def _repr_html_(self) -> str:
