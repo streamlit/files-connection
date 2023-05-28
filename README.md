@@ -66,17 +66,25 @@ there. You can pass in anything you would pass to an fsspec file system construc
 
 ### read()
 
-`conn.read("path/to/file", input_format="text|csv|parquet|json" or None, ttl=None) -> pd.DataFrame`
+`conn.read("path/to/file", input_format="text|csv|parquet|json|jsonl" or None, ttl=None) -> pd.DataFrame`
 
 Specify a path to file and input format. Optionally specify a TTL for caching.
 
-Will attempt to infer `input_format` from path suffix if not specified.
+Valid values for `input_format=`:
+
+- `text` returns a string
+- `json` returns a dict or list (depending on the JSON object) - only one object per file is supported
+- `csv`, `parquet`, `jsonl` return a pandas DataFrame
+- `None` will attempt to infer the input format from file extension of `path`
+- Anything else (or unrecognized inferred type) raises a `ValueError`
 
 ```python
 conn = st.experimental_connection("s3", type=FilesConnection)
 df = conn.read(f"my-s3-bucket/path/to/file.parquet", input_format='parquet')
 st.dataframe(df)
 ```
+
+**Note:** We want to add a `format=` argument to specify output format with more options, contributions welcome!
 
 ### open()
 
