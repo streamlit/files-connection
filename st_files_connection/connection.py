@@ -16,8 +16,9 @@ from __future__ import annotations
 
 from datetime import timedelta
 from io import TextIOWrapper
+import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Iterator, Optional, Union, overload
 from typing_extensions import Literal
 
 import pandas as pd
@@ -128,6 +129,16 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         input_format: Literal["json"],
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
+    ) -> Any:
+        pass
+
+    @overload
+    def read(
+        self,
+        path: str | Path,
+        input_format: Literal["jsonl"],
+        ttl: Optional[Union[float, int, timedelta]] = None,
+        **kwargs,
     ) -> pd.DataFrame:
         pass
 
@@ -170,10 +181,19 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
                 return pd.read_parquet(f, **kwargs)
 
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
-        def _read_json(path: str | Path, **kwargs) -> pd.DataFrame:
+        def _read_json(path: str | Path, **kwargs) -> Any:
             if "connection_name" in kwargs:
                 kwargs.pop("connection_name")
 
+            with self.open(path, "rt") as f:
+                return json.load(f, **kwargs)
+
+        @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
+        def _read_jsonl(path: str | Path, **kwargs) -> pd.DataFrame:
+            if "connection_name" in kwargs:
+                kwargs.pop("connection_name")
+
+            kwargs['lines'] = True
             with self.open(path, "rt") as f:
                 return pd.read_json(f, **kwargs)
 
@@ -193,8 +213,7 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
         elif input_format == 'json':
             return _read_json(path, connection_name=self._connection_name, **kwargs)
         elif input_format == 'jsonl':
-            kwargs['lines'] = True
-            return _read_json(path, connection_name=self._connection_name, **kwargs)
+            return _read_jsonl(path, connection_name=self._connection_name, **kwargs)
         # TODO: if input_format is None, try to infer it from file extension
         raise ValueError(f"{input_format} is not a valid value for `input_format=`.")
 
