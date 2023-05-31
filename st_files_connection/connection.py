@@ -16,8 +16,9 @@ from __future__ import annotations
 
 from datetime import timedelta
 from io import TextIOWrapper
+import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Iterator, Optional, Union, overload
 from typing_extensions import Literal
 
 import pandas as pd
@@ -105,17 +106,17 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     def read(
         self,
         path: str | Path,
-        input_format: Literal["csv"],
+        input_format: Literal["json"],
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> Any:
         pass
 
     @overload
     def read(
         self,
         path: str | Path,
-        input_format: Literal["parquet"],
+        input_format: Literal["csv", "parquet", "jsonl"],
         ttl: Optional[Union[float, int, timedelta]] = None,
         **kwargs,
     ) -> pd.DataFrame:
@@ -130,8 +131,9 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
     ):
         """Read the file at the specified path, cache the result and return as a pandas DataFrame.
 
-        input_format must be specified - valid values are `text`, `csv`, `parquet`. Result is
-        cached indefinitely by default, set `ttl = 0` to disable caching.
+        input_format may be specified - valid values are `text`, `csv`, `parquet`, `json`, `jsonl`.
+        If not specified, input_format will be inferred optimistically from path file extension.
+        Result is cached indefinitely by default, set `ttl = 0` to disable caching.
         """
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
         def _read_text(path: str | Path, **kwargs) -> str:
@@ -151,19 +153,48 @@ class FilesConnection(ExperimentalBaseConnection["AbstractFileSystem"]):
 
         @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
         def _read_parquet(path: str | Path, **kwargs) -> pd.DataFrame:
+            # TODO: for general read() user may commonly pass `nrows` which isn't supported by read_parquet
+            # Can we add something like this as a workaround? https://stackoverflow.com/a/69888274/20530083
             if "connection_name" in kwargs:
                 kwargs.pop("connection_name")
 
             with self.open(path, "rb") as f:
                 return pd.read_parquet(f, **kwargs)
-        
+
+        @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
+        def _read_json(path: str | Path, **kwargs) -> Any:
+            if "connection_name" in kwargs:
+                kwargs.pop("connection_name")
+
+            with self.open(path, "rt") as f:
+                return json.load(f, **kwargs)
+
+        @cache_data(ttl=ttl, show_spinner="Running `files.read(...)`.")
+        def _read_jsonl(path: str | Path, **kwargs) -> pd.DataFrame:
+            if "connection_name" in kwargs:
+                kwargs.pop("connection_name")
+
+            kwargs['lines'] = True
+            with self.open(path, "rt") as f:
+                return pd.read_json(f, **kwargs)
+
+        # Try to infer input_format from file extension if missing
+        if input_format is None:
+            # You can construct a Path from a Path so this should work regardless
+            input_format = Path(path).suffix.replace('.', '', 1)
+            if input_format == 'txt':
+                input_format = 'text'
+
         if input_format == 'text':
             return _read_text(path, connection_name=self._connection_name, **kwargs)
         elif input_format == 'csv':
             return _read_csv(path, connection_name=self._connection_name, **kwargs)
         elif input_format == 'parquet':
             return _read_parquet(path, connection_name=self._connection_name, **kwargs)
-        # TODO: if input_format is None, try to infer it from file extension
+        elif input_format == 'json':
+            return _read_json(path, connection_name=self._connection_name, **kwargs)
+        elif input_format == 'jsonl':
+            return _read_jsonl(path, connection_name=self._connection_name, **kwargs)
         raise ValueError(f"{input_format} is not a valid value for `input_format=`.")
 
     def _repr_html_(self) -> str:
