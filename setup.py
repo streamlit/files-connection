@@ -16,12 +16,9 @@ import setuptools
 
 VERSION = "0.1.0"  # PEP-440
 
-NAME = "st_files_connection"
+NAME = "st-files-connection"
 
-INSTALL_REQUIRES = [
-    "streamlit>=1.22",
-    "fsspec"
-]
+INSTALL_REQUIRES = ["streamlit>=1.22", "fsspec"]
 
 
 setuptools.setup(
@@ -49,5 +46,7 @@ setuptools.setup(
     python_requires=">=3.8",
     # Requirements
     install_requires=INSTALL_REQUIRES,
-    packages=["st_files_connection"]
+    packages=["st_files_connection"],
+    long_description=open("README.md", "r", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
 )
