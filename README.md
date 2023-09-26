@@ -11,7 +11,7 @@ See the example directory for a fuller example using S3 and/or GCS.
 
 ```sh
 pip install streamlit
-pip install git+https://github.com/streamlit/files-connection
+pip install st-files-connection
 ```
 
 **Note:** Install from pypi coming soon
